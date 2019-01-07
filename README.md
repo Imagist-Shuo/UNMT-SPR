@@ -107,6 +107,10 @@ Please cite [1] and if you found the resources in this repository useful.
   year={2019}
 }
 ```
+If you have any problem, please contact us.
+Shuo Ren: shuoren@buaa.edu.cn
+Zhirui Zhang: zrustc@gmail.com
+
 License
 ----
 See the LICENSE file for more details.
