@@ -112,7 +112,7 @@ If you have any problem, please contact us.
 
 Shuo Ren: shuoren@buaa.edu.cn
 
-Zhirui Zhang: zrustc@gmail.com
+Zhirui Zhang: zrustc11@gmail.com
 
 License
 ----
