@@ -24,7 +24,7 @@ This repository contains the implementation of unsupervised machine translation 
 The test environment is Ubuntu 16.04 LTS with CUDA 9.0. You need to install all the dependencies listed above. The toughest ones may be Moses and Salm, so we also provide two scripts (_install_moses.sh_ and _install_salm.sh_) to help you simplify the installation. 
 
 ## Steps
-Clone the whole project into your local folder as "~/UNMT-SPR" by default. In following instructions, we will take the translation systems between English and French as example. **By default**, Moses, fastText and vecmap are installed in "~/mosesdecoder", "~/fasttext" and "~/vecmap", which are noted by $MOSES_HOME, $FASTTEXT_HOME and $VECMAP_HOME respectively. 
+Clone the whole project into your local folder as "`~`\/UNMT-SPR" by default. In following instructions, we will take the translation systems between English and French as example. **By default**, Moses, fastText and vecmap are installed in "`~`/mosesdecoder", "`~`/fasttext" and "`~`/vecmap", which are noted by $MOSES_HOME, $FASTTEXT_HOME and $VECMAP_HOME respectively. 
 **Moreover**, our method trains SMT models and NMT models alternately, so we will get the following models in order, i.e., SMT0, NMT0, SMT1, NMT1, SMT2, NMT2, ... The numbers (0,1,2) are noted by $EPOCH. According to our experiments, three epochs (0,1,2) are enough to reach convergence.
 
 #### 1. Get and preprocess data
