@@ -14,10 +14,10 @@ The comparison result is in the following table, which significantly outperforms
 | Artetxe et al. (2017)         |         15.13        |         15.56        |         6.89         |         10.21        |           -          |           -          |
 | Lample et al. (2017)          |         15.05        |         14.31        |           -          |           -          |         9.64         |         13.33        |
 | Yang et al. (2018)            |         16.97        |         15.58        |           -          |           -          |         10.86        |         14.62        |
-| Lample et al. (2017) NMT      |         25.41        |         24.18        |           -          |           -          |         17.16        |         21.00        |
-| Lample et al. (2017) PBMT     |         28.11        |         27.16        |           -          |           -          |         17.77        |         22.68        |
-| Lample et al. (2017) NMT+PBMT |         27.12        |         26.29        |           -          |           -          |         17.52        |         22.06        |
-| Lample et al. (2017) PBMT+NMT |         27.60        |         27.68        |           -          |           -          |         20.23        |         25.19        |
+| Lample et al. (2018) NMT      |         25.41        |         24.18        |           -          |           -          |         17.16        |         21.00        |
+| Lample et al. (2018) PBMT     |         28.11        |         27.16        |           -          |           -          |         17.77        |         22.68        |
+| Lample et al. (2018) NMT+PBMT |         27.12        |         26.29        |           -          |           -          |         17.52        |         22.06        |
+| Lample et al. (2018) PBMT+NMT |         27.60        |         27.68        |           -          |           -          |         20.23        |         25.19        |
 | Our method (old)               |         29.21        |         28.79        |         16.43        |         20.04        |         21.07        |         25.92        |
 | Our method (new)               |         29.72        |         29.08        |         17.08        |         20.58        |         21.54        |         26.30        |
 
