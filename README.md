@@ -164,7 +164,7 @@ Other references:
 }
 ```
 ## Contact information
-If you have any problem, please contact us.
+If you have any question, please contact us.
 
 Shuo Ren: shuoren@buaa.edu.cn
 
