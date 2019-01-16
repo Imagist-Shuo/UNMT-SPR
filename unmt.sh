@@ -238,6 +238,7 @@ subword-nmt apply-bpe -c ../../Vocab/$LANG_PAIR.code --vocabulary ../../Vocab/$L
 subword-nmt apply-bpe -c ../../Vocab/$LANG_PAIR.code --vocabulary ../../Vocab/$LANG_PAIR.bpe.$TRG_LANG.vocab --vocabulary-threshold 50 < corpus.$SRC_LANG-$TRG_LANG.tc.$TRG_LANG > corpus.$SRC_LANG-$TRG_LANG.bpe.$TRG_LANG
 
 elif [ $MODE == "nmt_trans" ]
+then
 # Translating
 EPOCH=$2
 NEXT_EPOCH=$3
