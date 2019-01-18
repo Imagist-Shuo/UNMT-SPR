@@ -112,7 +112,7 @@ Please cite [1] and if you found the resources in this repository useful.
 ```
 @inproceedings{ren2018unsupervised,
   title={Unsupervised Neural Machine Translation with SMT as Posterior Regularization},
-  author={Shuo, Ren and Zhirui, Zhang and Shujie, Liu and Ming, Zhou and Shuai, Ma},
+  author={Ren, Shuo and Zhang, Zhirui and Liu, Shujie and Zhou, Ming and Ma, Shuai},
   booktitle = {AAAI},
   year={2019}
 }
