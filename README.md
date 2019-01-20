@@ -110,10 +110,10 @@ $ ./unmt.sh smt_trans 1 01 # taking epoch 1 and split file xx.split01 for exampl
 Please cite [1] and if you found the resources in this repository useful.
 [1] S. Ren*, Z. Zhang*, S. Liu, M. Zhou, S. Ma **Unsupervised Neural Machine Translation with SMT as Posterior Regularization**
 ```
-@inproceedings{ren2018unsupervised,
+@article{ren2019unsupervised,
   title={Unsupervised Neural Machine Translation with SMT as Posterior Regularization},
   author={Ren, Shuo and Zhang, Zhirui and Liu, Shujie and Zhou, Ming and Ma, Shuai},
-  booktitle = {AAAI},
+  journal={arXiv preprint arXiv:1901.04112},
   year={2019}
 }
 ```
