@@ -24,7 +24,7 @@ with open(bpe_emb, 'r', encoding='utf-8') as fr:
 		vec = np.array(list(map(float, split_line[1:])))
 		unk_vec = i/(i+1) * unk_vec + 1/(i+1)*vec
 		i += 1
-unk_vec=' '.joint(list(map(str, list(unk_vec))))
+unk_vec=' '.join(list(map(str, list(unk_vec))))
 vocab_file = map(str.strip, open(vocab_file, 'r', encoding='utf-8').readlines())
 
 true_vocab = open(output_vocab, 'w+', encoding='utf-8')
