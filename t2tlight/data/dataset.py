@@ -83,6 +83,17 @@ def batch_examples(example, batch_size, max_length,
 
     return outputs
 
+def get_pre_embeddings(filename):
+    vocab = []
+    embd = []
+    file = open(filename,'r', encoding='utf-8')
+    for line in file.readlines():
+        row = line.strip().split(' ')
+        vocab.append(row[0])
+        embd.append(row[1:])
+    file.close()
+    tf.logging.info("Loaded %s" % filename)
+    return vocab, np.asarray(embd)
 
 def get_training_input(filenames, params):
     """ Get input for training stage

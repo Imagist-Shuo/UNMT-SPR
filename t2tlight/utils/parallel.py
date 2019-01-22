@@ -92,6 +92,9 @@ def shard_features(features, device_list):
     sharded_features = {}
 
     for k, v in features.items():
+        if k == 'src_embs' or k == 'trg_embs':
+            sharded_features[k] = v
+            continue
         v = tf.convert_to_tensor(v)
         if not v.shape.as_list():
             v = tf.expand_dims(v, axis=-1)

@@ -35,6 +35,8 @@ def parse_args(args=None):
                         help="Path to saved models")
     parser.add_argument("--vocab", type=str, nargs=2, required=True,
                         help="Path of source and target vocabulary")
+    parser.add_argument("--embeddings", type=str, nargs=2,
+                        help="Path of source and target pretrained embeddings")
     parser.add_argument("--validation", type=str,
                         help="Path of validation file")
     parser.add_argument("--references", type=str, nargs="+",
@@ -52,6 +54,7 @@ def default_parameters():
         output="",
         model="transformer",
         vocab=["", ""],
+        embeddings=["",""],
         # Default training hyper parameters
         num_threads=8,
         batch_size=4096,
@@ -87,6 +90,7 @@ def default_parameters():
         decode_length=50,  # max length = source length + decode length, during inference
         validation="",
         references=[""],
+        renew_lr=False,
         save_checkpoint_secs=0,
         save_checkpoint_steps=2000,
         only_save_trainable=False,   # Set to true if the model is only used to inference
@@ -154,6 +158,7 @@ def override_parameters(params, args):
     params.input = args.input or params.input
     params.output = args.output or params.output
     params.vocab = args.vocab or params.vocab
+    params.embeddings = args.embeddings or params.embeddings
     params.validation = args.validation or params.validation
     params.references = args.references or params.references
     params.parse(args.parameters)
@@ -293,6 +298,13 @@ def main(args):
         features = dataset.get_training_input(params.input, params)
         
        # features, init_op = cache.cache_features(features, params.update_cycle)
+        # Add pre_trained_embedding:
+        if params.use_pretrained_embedding:
+            _, src_embs = dataset.get_pre_embeddings(params.embeddings[0])
+            _, trg_embs = dataset.get_pre_embeddings(params.embeddings[1])
+            features['src_embs'] = src_embs
+            features['trg_embs'] = trg_embs
+            print('Loaded Embeddings!', src_embs.shape, trg_embs.shape)
 
         # Build model
         initializer = get_initializer(params)
@@ -308,6 +320,7 @@ def main(args):
 
         # Create global step
         global_step = tf.train.get_or_create_global_step()
+        initial_global_step = global_step.assign(0)
 
         # Print parameters
         all_weights = {v.name: v for v in tf.trainable_variables()}
@@ -367,6 +380,7 @@ def main(args):
 
         train_hooks = [
             tf.train.StopAtStepHook(last_step=params.train_steps),
+            #tf.train.StopAtStepHook(num_steps=params.train_steps),
             tf.train.NanTensorHook(loss),
             tf.train.LoggingTensorHook(
                 {
@@ -413,8 +427,12 @@ def main(args):
         with tf.train.MonitoredTrainingSession(
                 checkpoint_dir=params.output, hooks=train_hooks,
                 save_checkpoint_secs=None, config=config) as sess:
+            #sess.run(features['source'].eval())
+            #sess.run(features['target'].eval())
             # Restore pre-trained variables
             sess.run_step_fn(restore_fn)
+            if params.renew_lr == True:
+                sess.run(initial_global_step)
 
             while not sess.should_stop():
                 sess.run_step_fn(step_fn)

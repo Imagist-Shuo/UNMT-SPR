@@ -1,5 +1,5 @@
 """
-Transformer Network
+Transformer-CNN Network
 """
 
 from __future__ import absolute_import
@@ -11,6 +11,7 @@ import tensorflow as tf
 
 from utils.attention import *
 from utils.layer import *
+from utils.common import *
 from models.model import *
 
 def attention_bias(inputs, mode, inf=-1e9, name=None):
@@ -77,25 +78,50 @@ def ffn_layer(inputs, hidden_size, output_size, dropout_rate=None, scope=None):
 
         return output
 
+def cnn_layer(inputs, output_size, kernel_size, padding='SAME', scope=None):
+    with tf.variable_scope(scope, default_name="cnn_layer", values=[inputs]):
+        shapes = infer_shape(inputs)
+        filter_shape = [kernel_size, shapes[-1], output_size]
+        bias_shape = [1, 1, output_size]
+        strides = 1
+        kernel = tf.get_variable("W", filter_shape, dtype = tf.float32)
+        bias = tf.get_variable("b", bias_shape, dtype = tf.float32)
+
+        outputs = tf.nn.relu(tf.nn.conv1d(inputs, kernel, strides, padding) + bias)
+        # a, b = tf.split(outputs, [output_size, output_size], axis= 2) 
+        # return a * tf.sigmoid(b)
+
+        return outputs
+
 def transformer_encoder(inputs, bias, params, scope=None):
     with tf.variable_scope(scope, default_name="encoder",
                            values=[inputs, bias]):
         x = inputs
         for layer in range(params.num_encoder_layers):
             with tf.variable_scope("layer_%d" % layer):
-                with tf.variable_scope("self_attention"):
-                    y = multihead_attention(
-                        layer_process(x, params.layer_preprocess),
-                        None,
-                        bias,
-                        params.num_heads,
-                        params.attention_key_channels or params.hidden_size,
-                        params.attention_value_channels or params.hidden_size,
-                        params.hidden_size,
-                        params.attention_dropout
-                    )
-                    y = y["outputs"]
-                    x = residual_fn(x, y, params.residual_dropout)
+                
+                if layer < params.num_encoder_layers // 2:
+                    with tf.variable_scope("local_cnn"):
+                        y = cnn_layer(
+                            layer_process(x, params.layer_preprocess),
+                            params.hidden_size,
+                            params.cnn_window_size
+                        )
+                        x = residual_fn(x, y, params.residual_dropout)
+                else:
+                    with tf.variable_scope("self_attention"):
+                        y = multihead_attention(
+                            layer_process(x, params.layer_preprocess),
+                            None,
+                            bias,
+                            params.num_heads,
+                            params.attention_key_channels or params.hidden_size,
+                            params.attention_value_channels or params.hidden_size,
+                            params.hidden_size,
+                            params.attention_dropout
+                        )
+                        y = y["outputs"]
+                        x = residual_fn(x, y, params.residual_dropout)
 
                 with tf.variable_scope("feed_forward"):
                     y = ffn_layer(
@@ -119,6 +145,21 @@ def transformer_decoder(inputs, memory, bias, mem_bias, params, state=None, scop
             layer_name = "layer_%d" % layer
             with tf.variable_scope(layer_name):
                 layer_state = state[layer_name] if state is not None else None
+                # with tf.variable_scope("local_cnn"):
+                #     if layer_state is not None:
+                #         cnn_inputs = layer_state["cnn_inputs"]
+                #         cnn_inputs = tf.concat([cnn_inputs, x], axis=1)[:,1:,:]
+                #         x2 = cnn_inputs
+                #     else:
+                #         x2 = tf.pad(x, [[0, 0], [(params.cnn_window_size + 1) // 2 - 1, 0], [0, 0]])
+
+                #     y = cnn_layer(
+                #         layer_process(x2, params.layer_preprocess),
+                #         params.hidden_size,
+                #         (params.cnn_window_size + 1) // 2,
+                #         'VALID'
+                #         )
+                #     x = residual_fn(x, y, params.residual_dropout)
 
                 with tf.variable_scope("self_attention"):
                     y = multihead_attention(
@@ -134,6 +175,7 @@ def transformer_decoder(inputs, memory, bias, mem_bias, params, state=None, scop
                     )
 
                     if layer_state is not None:
+                        # y["state"]["cnn_inputs"] = cnn_inputs
                         next_state[layer_name] = y["state"]
 
                     y = y["outputs"]
@@ -186,39 +228,27 @@ def encoding_graph(features, mode, params):
     svocab = params.vocabulary["source"]
     src_vocab_size = len(svocab)
     initializer = tf.random_normal_initializer(0.0, params.hidden_size ** -0.5)
-    if params.use_pretrained_embedding:
-        src_emb_initializer = tf.constant_initializer(features['src_embs'])
-        if params.shared_source_target_embedding:
-            src_embedding = tf.get_variable("shared_embedding",
-                                            [src_vocab_size, hidden_size],
-                                            initializer=src_emb_initializer)
-            bias = tf.get_variable("src_language_bias", [hidden_size])
-        else:
-            src_embedding = tf.get_variable("source_embedding",
-                                            [src_vocab_size, hidden_size],
-                                            initializer=src_emb_initializer)
+
+    if params.shared_source_target_embedding:
+        src_embedding = tf.get_variable("shared_embedding",
+                                        [src_vocab_size, hidden_size],
+                                        initializer=initializer)
+        bias = tf.get_variable("src_language_bias", [hidden_size])
     else:
-        if params.shared_source_target_embedding:
-            src_embedding = tf.get_variable("shared_embedding",
-                                            [src_vocab_size, hidden_size],
-                                            initializer=initializer)
-            bias = tf.get_variable("src_language_bias", [hidden_size])
-        else:
-            src_embedding = tf.get_variable("source_embedding",
-                                            [src_vocab_size, hidden_size],
-                                            initializer=initializer)
+        src_embedding = tf.get_variable("source_embedding",
+                                        [src_vocab_size, hidden_size],
+                                        initializer=initializer)
 
     # id => embedding
     # src_seq: [batch, max_src_length]
     inputs = tf.gather(src_embedding, src_seq) * (hidden_size ** 0.5)
-    inputs = inputs * tf.expand_dims(src_mask, -1)
 
     # Preparing encoder
     if params.shared_source_target_embedding:
         encoder_input = tf.nn.bias_add(inputs, bias)
     else:
         encoder_input = inputs
-    encoder_input = add_timing_signal(encoder_input)
+    encoder_input = add_timing_signal(encoder_input) * tf.expand_dims(src_mask, -1)
     enc_attn_bias = attention_bias(src_mask, "masking")
 
     if params.residual_dropout is not None and params.residual_dropout > 0:
@@ -251,27 +281,15 @@ def decoding_graph(features, state, mode, params):
     tgt_vocab_size = len(tvocab)
     initializer = tf.random_normal_initializer(0.0, params.hidden_size ** -0.5)
 
-    if params.use_pretrained_embedding:
-        trg_emb_initializer = tf.constant_initializer(features['trg_embs'])
-        if params.shared_source_target_embedding:
-            with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-                tgt_embedding = tf.get_variable("shared_embedding",
-                                                [tgt_vocab_size, hidden_size],
-                                                initializer=trg_emb_initializer)    
-        else:
-            tgt_embedding = tf.get_variable("target_embedding",
+    if params.shared_source_target_embedding:
+        with tf.variable_scope(tf.get_variable_scope(), reuse=True):
+            tgt_embedding = tf.get_variable("shared_embedding",
                                             [tgt_vocab_size, hidden_size],
-                                            initializer=trg_emb_initializer)
+                                            initializer=initializer)    
     else:
-        if params.shared_source_target_embedding:
-            with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-                tgt_embedding = tf.get_variable("shared_embedding",
-                                                [tgt_vocab_size, hidden_size],
-                                                initializer=initializer)    
-        else:
-            tgt_embedding = tf.get_variable("target_embedding",
-                                            [tgt_vocab_size, hidden_size],
-                                            initializer=initializer)
+        tgt_embedding = tf.get_variable("target_embedding",
+                                        [tgt_vocab_size, hidden_size],
+                                        initializer=initializer)
 
     if params.shared_embedding_and_softmax_weights:
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
@@ -403,7 +421,8 @@ class Transformer(NMTModel):
                     "decoder": {
                         "layer_%d" % i: {
                             "key": tf.zeros([batch, 0, params.hidden_size]),
-                            "value": tf.zeros([batch, 0, params.hidden_size])
+                            "value": tf.zeros([batch, 0, params.hidden_size]),
+                            # "cnn_inputs": tf.zeros([batch, (params.cnn_window_size + 1) // 2 , params.hidden_size])
                         }
                         for i in range(params.num_decoder_layers)
                     }
@@ -426,7 +445,7 @@ class Transformer(NMTModel):
 
     @staticmethod
     def get_name():
-        return "transformer"
+        return "transformerCNN"
 
     @staticmethod
     def get_parameters():
@@ -439,6 +458,7 @@ class Transformer(NMTModel):
             bosId = 2,
             hidden_size=512,
             filter_size=2048,
+            cnn_window_size=3,
             num_heads=8,
             num_encoder_layers=6,
             num_decoder_layers=6,
@@ -450,7 +470,6 @@ class Transformer(NMTModel):
             attention_value_channels=0,
             shared_embedding_and_softmax_weights=True,
             shared_source_target_embedding=False,
-            use_pretrained_embedding=False,
             layer_preprocess="layer_norm"
         )
 
