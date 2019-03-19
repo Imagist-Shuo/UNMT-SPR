@@ -74,7 +74,7 @@ $ ./run.sh train 0 fr en true [0,1,2,3]
 $ cd UNMT-SPR/Config/NMT$EPOCH
 $ # The follwing two commands should be run simultaneously by two processes
 $ ./run.sh joint $EPOCH $SRC_LANG $TRG_LANG true $GPU_LIST_1 $BATCH_SIZE 0 20 false $SPLIT_PART trial # Process one
-$ ./run.sh joint $EPOCH $SRC_LANG $TRG_LANG true $GPU_LIST_1 $BATCH_SIZE 0 20 false $SPLIT_PART trial # Process two
+$ ./run.sh joint $EPOCH $TRG_LANG $SRC_LANG true $GPU_LIST_2 $BATCH_SIZE 0 20 false $SPLIT_PART trial # Process two
 ```
 where $SPLIT_PART means the split monolingual file you choose. ($SPLIT_PART = 00 means you want to use XXX.split00 as the training data in the back-translation procedure), and $BATCH_SIZE means the number of sentences you want to use for each back-translation iteration. Taking NMT0 for example again, if we want to use the ".split00" files and the batch size is set to 200000, just run
 ```sh
