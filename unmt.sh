@@ -1,6 +1,6 @@
 set -e
 
-based_dir=/home/lyy/usLearning
+based_dir=~
 
 SRC_LANG=en
 TRG_LANG=fr
@@ -11,8 +11,8 @@ LANG_PAIR=$SRC_LANG-$TRG_LANG
 MOSES_HOME=$based_dir/mosesdecoder
 FASTTEXT_HOME=$based_dir/fasttext
 VECMAP_HOME=$based_dir/vecmap
-THREADS=10
-GPU_LIST=[0,2]
+THREADS=40
+GPU_LIST=[0,1,2,3]
 
 TOKENIZER=$MOSES_HOME/scripts/tokenizer/tokenizer.perl
 NORM_PUNC=$MOSES_HOME/scripts/tokenizer/normalize-punctuation.perl
@@ -181,7 +181,7 @@ then
 
   echo "Training cross-lingual word embeddings..."
   cd ../Vocab
-  python3 $VECMAP_HOME/map_embeddings.py --unsupervised $SRC_LANG.emb.vec $TRG_LANG.emb.vec $LANG_PAIR.$SRC_LANG.vec $LANG_PAIR.$TRG_LANG.vec # 1111
+  python3 $VECMAP_HOME/map_embeddings.py --unsupervised $SRC_LANG.emb.vec $TRG_LANG.emb.vec $LANG_PAIR.$SRC_LANG.vec $LANG_PAIR.$TRG_LANG.vec
 
   echo "Inferring dictionary..."
   python3 $based_dir/UNMT-SPR/scripts/build_dic_from_emb_multichoice.py --src_embeddings $LANG_PAIR.$SRC_LANG.vec --trg_embeddings $LANG_PAIR.$TRG_LANG.vec --dictionary $SRC_LANG-$TRG_LANG.dic \
