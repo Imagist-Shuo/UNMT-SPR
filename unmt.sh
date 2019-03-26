@@ -89,14 +89,14 @@ then
   #wget -c http://data.statmt.org/wmt17/translation-task/news.2017.fr.shuffled.gz
 
   # Germen data
-  wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2007.de.shuffled.gz
-  wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2008.de.shuffled.gz
-  wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2009.de.shuffled.gz
-  wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2010.de.shuffled.gz
-  wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2011.de.shuffled.gz
-  wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2012.de.shuffled.gz
-  wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2013.de.shuffled.gz
-  wget -c http://www.statmt.org/wmt15/training-monolingual-news-crawl-v2/news.2014.de.shuffled.v2.gz
+  # wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2007.de.shuffled.gz
+  # wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2008.de.shuffled.gz
+  # wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2009.de.shuffled.gz
+  # wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2010.de.shuffled.gz
+  # wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2011.de.shuffled.gz
+  # wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2012.de.shuffled.gz
+  # wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2013.de.shuffled.gz
+  # wget -c http://www.statmt.org/wmt15/training-monolingual-news-crawl-v2/news.2014.de.shuffled.v2.gz
   # wget -c http://data.statmt.org/wmt16/translation-task/news.2015.de.shuffled.gz
   # wget -c http://data.statmt.org/wmt17/translation-task/news.2016.de.shuffled.gz
   # wget -c http://data.statmt.org/wmt18/translation-task/news.2017.de.shuffled.deduped.gz
@@ -112,7 +112,6 @@ then
     fi
   done
   
-
   if ! [[ -f "$SRC_RAW" && -f "$TRG_RAW" ]]; then
     echo "Concatenating monolingual data..."
     cat $(ls news*$SRC* | grep -v gz) > $SRC_RAW
@@ -127,7 +126,6 @@ then
   python3 $based_dir/UNMT-SPR/scripts/clean_mono_data.py $SRC_RAW $SRC_CLEANED ../Models/langid.bin $SRC_LANG
   python3 $based_dir/UNMT-SPR/scripts/clean_mono_data.py $TRG_RAW $TRG_CLEANED ../Models/langid.bin $TRG_LANG
 
-  
   echo "Downloading test data..."
   cd ../Test
   wget -c http://data.statmt.org/wmt17/translation-task/dev.tgz
@@ -198,7 +196,6 @@ then
   rm train_data_bpe.vocab # train_data_bpe.whole
   rm ../Train/combined.bpe
 
-  
   echo "Training KenLM..."
   cd ../Train
   $MOSES_HOME/bin/lmplz -o 5 --prune 0 1 1 2 2 < $SRC_TC > ../Models/lm.arpa.$SRC
@@ -206,7 +203,6 @@ then
   $MOSES_HOME/bin/lmplz -o 5 --prune 0 1 1 2 2 < $TRG_TC > ../Models/lm.arpa.$TRG 
   $MOSES_HOME/bin/build_binary ../Models/lm.arpa.$TRG ../Models/lm.bin.$TRG
   
-
   echo "Spliting files..." # this step will split the whole training data into several files, each of 4,000 ,000 lines.
   mv $SRC_TC ./tok
   mv $TRG_TC ./tok
