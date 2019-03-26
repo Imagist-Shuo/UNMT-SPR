@@ -1,16 +1,18 @@
 set -e
 
-based_dir=~
+based_dir=/home/lyy/usLearning
 
 SRC_LANG=en
 TRG_LANG=fr
+SRC=$SRC_LANG
+TRG=$TRG_LANG
 
 LANG_PAIR=$SRC_LANG-$TRG_LANG
 MOSES_HOME=$based_dir/mosesdecoder
 FASTTEXT_HOME=$based_dir/fasttext
 VECMAP_HOME=$based_dir/vecmap
-THREADS=40
-GPU_LIST=[0,1,2,3]
+THREADS=10
+GPU_LIST=[0,2]
 
 TOKENIZER=$MOSES_HOME/scripts/tokenizer/tokenizer.perl
 NORM_PUNC=$MOSES_HOME/scripts/tokenizer/normalize-punctuation.perl
@@ -19,8 +21,6 @@ REM_NON_PRINT_CHAR=$MOSES_HOME/scripts/tokenizer/remove-non-printing-char.perl
 TRUECASE_TRAIN=$MOSES_HOME/scripts/recaser/train-truecaser.perl
 TRUECASER=$MOSES_HOME/scripts/recaser/truecase.perl
 
-SRC=$SRC_LANG
-TRG=$TRG_LANG
 SRC_RAW=corpus.$SRC
 TRG_RAW=corpus.$TRG
 SRC_CLEANED=corpus.cl.$SRC
@@ -32,14 +32,15 @@ TRG_TC=corpus.tc.$TRG
 SRC_BPE=corpus.$LANG_PAIR.bpe.$SRC
 TRG_BPE=corpus.$LANG_PAIR.bpe.$TRG
 
-SRC_DEV_RAW=newstest2013.$SRC
-TRG_DEV_RAW=newstest2013.$TRG
+SRC_DEV_RAW=newstest2013-src.$SRC
+TRG_DEV_RAW=newstest2013-ref.$TRG
 SRC_DEV_TOK=dev.$LANG_PAIR.tok.$SRC
 TRG_DEV_TOK=dev.$LANG_PAIR.tok.$TRG
 SRC_DEV_TC=dev.$LANG_PAIR.tc.$SRC
 TRG_DEV_TC=dev.$LANG_PAIR.tc.$TRG
 SRC_DEV_BPE=dev.$LANG_PAIR.bpe.$SRC
 TRG_DEV_BPE=dev.$LANG_PAIR.bpe.$TRG
+
 SRC_TEST_RAW=newstest2014-fren-src.en
 TRG_TEST_RAW=newstest2014-fren-ref.fr
 SRC_TEST_TOK=test.$LANG_PAIR.tok.$SRC
@@ -61,6 +62,7 @@ then
   mkdir Test
 
   cd Train
+  :
   echo "Download training data..."
   wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2007.en.shuffled.gz
   wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2008.en.shuffled.gz
@@ -87,14 +89,14 @@ then
   #wget -c http://data.statmt.org/wmt17/translation-task/news.2017.fr.shuffled.gz
 
   # Germen data
-  # wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2007.de.shuffled.gz
-  # wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2008.de.shuffled.gz
-  # wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2009.de.shuffled.gz
-  # wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2010.de.shuffled.gz
-  # wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2011.de.shuffled.gz
-  # wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2012.de.shuffled.gz
-  # wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2013.de.shuffled.gz
-  # wget -c http://www.statmt.org/wmt15/training-monolingual-news-crawl-v2/news.2014.de.shuffled.v2.gz
+  wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2007.de.shuffled.gz
+  wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2008.de.shuffled.gz
+  wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2009.de.shuffled.gz
+  wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2010.de.shuffled.gz
+  wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2011.de.shuffled.gz
+  wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2012.de.shuffled.gz
+  wget -c http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2013.de.shuffled.gz
+  wget -c http://www.statmt.org/wmt15/training-monolingual-news-crawl-v2/news.2014.de.shuffled.v2.gz
   # wget -c http://data.statmt.org/wmt16/translation-task/news.2015.de.shuffled.gz
   # wget -c http://data.statmt.org/wmt17/translation-task/news.2016.de.shuffled.gz
   # wget -c http://data.statmt.org/wmt18/translation-task/news.2017.de.shuffled.deduped.gz
@@ -109,6 +111,7 @@ then
       echo "$OUTPUT already decompressed."
     fi
   done
+  
 
   if ! [[ -f "$SRC_RAW" && -f "$TRG_RAW" ]]; then
     echo "Concatenating monolingual data..."
@@ -121,10 +124,10 @@ then
   echo "Cleaning data..."
   wget -c https://s3-us-west-1.amazonaws.com/fasttext-vectors/supervised_models/lid.176.bin
   mv lid.176.bin ../Models/langid.bin
-
   python3 $based_dir/UNMT-SPR/scripts/clean_mono_data.py $SRC_RAW $SRC_CLEANED ../Models/langid.bin $SRC_LANG
   python3 $based_dir/UNMT-SPR/scripts/clean_mono_data.py $TRG_RAW $TRG_CLEANED ../Models/langid.bin $TRG_LANG
 
+  
   echo "Downloading test data..."
   cd ../Test
   wget -c http://data.statmt.org/wmt17/translation-task/dev.tgz
@@ -132,13 +135,14 @@ then
 
   echo "Tokenizing training data..."
   cd ../Train
+  
   cat $SRC_CLEANED | $NORM_PUNC -l $SRC_LANG | $TOKENIZER -l $SRC_LANG -no-escape -threads $THREADS > $SRC_TOK
   cat $TRG_CLEANED | $NORM_PUNC -l $TRG_LANG | $TOKENIZER -l $TRG_LANG -no-escape -threads $THREADS > $TRG_TOK
 
   echo "Tokenizing valid and test data..."
   cd ../Test/dev
-  $INPUT_FROM_SGM < $SRC_DEV_RAW | $NORM_PUNC -l $SRC_LANG | $REM_NON_PRINT_CHAR | $TOKENIZER -l $SRC_LANG -no-escape -threads $THREADS > ../$SRC_DEV_TOK
-  $INPUT_FROM_SGM < $TRG_DEV_RAW | $NORM_PUNC -l $TRG_LANG | $REM_NON_PRINT_CHAR | $TOKENIZER -l $TRG_LANG -no-escape -threads $THREADS > ../$TRG_DEV_TOK
+  $INPUT_FROM_SGM < $SRC_DEV_RAW.sgm | $NORM_PUNC -l $SRC_LANG | $REM_NON_PRINT_CHAR | $TOKENIZER -l $SRC_LANG -no-escape -threads $THREADS > ../$SRC_DEV_TOK
+  $INPUT_FROM_SGM < $TRG_DEV_RAW.sgm | $NORM_PUNC -l $TRG_LANG | $REM_NON_PRINT_CHAR | $TOKENIZER -l $TRG_LANG -no-escape -threads $THREADS > ../$TRG_DEV_TOK
   $INPUT_FROM_SGM < $SRC_TEST_RAW.sgm | $NORM_PUNC -l $SRC_LANG | $REM_NON_PRINT_CHAR | $TOKENIZER -l $SRC_LANG -no-escape -threads $THREADS > ../$SRC_TEST_TOK
   $INPUT_FROM_SGM < $TRG_TEST_RAW.sgm | $NORM_PUNC -l $TRG_LANG | $REM_NON_PRINT_CHAR | $TOKENIZER -l $TRG_LANG -no-escape -threads $THREADS > ../$TRG_TEST_TOK
 
@@ -170,35 +174,38 @@ then
   cd ../Train
   $FASTTEXT_HOME/fasttext skipgram -input $SRC_TC -output ../Vocab/$SRC_LANG.emb -neg 10 -dim 512 -ws 5 -thread $THREADS
   $FASTTEXT_HOME/fasttext skipgram -input $TRG_TC -output ../Vocab/$TRG_LANG.emb -neg 10 -dim 512 -ws 5 -thread $THREADS
+  
   echo "Trainig shared bpe embeddings..."
   cat $SRC_BPE $TRG_BPE > combined.bpe
   $FASTTEXT_HOME/fasttext skipgram -input combined.bpe -output ../Vocab/$LANG_PAIR.bpe.emb -neg 10 -dim 512 -ws 5 -thread $THREADS
-  rm combined.bpe
 
   echo "Training cross-lingual word embeddings..."
   cd ../Vocab
-  python3 $VECMAP_HOME/map_embeddings.py --unsupervised $SRC_LANG.emb.vec $SRC_LANG.emb.vec $LANG_PAIR.$SRC_LANG.vec $LANG_PAIR.$TRG_LANG.vec
+  python3 $VECMAP_HOME/map_embeddings.py --unsupervised $SRC_LANG.emb.vec $TRG_LANG.emb.vec $LANG_PAIR.$SRC_LANG.vec $LANG_PAIR.$TRG_LANG.vec # 1111
 
   echo "Inferring dictionary..."
   python3 $based_dir/UNMT-SPR/scripts/build_dic_from_emb_multichoice.py --src_embeddings $LANG_PAIR.$SRC_LANG.vec --trg_embeddings $LANG_PAIR.$TRG_LANG.vec --dictionary $SRC_LANG-$TRG_LANG.dic \
-    --vocab_size 200000 --max_choice 100 --lambda_factor 20 --cuda
+  	--vocab_size 200000 --max_choice 100 --lambda_factor 20 --cuda
   python3 $based_dir/UNMT-SPR/scripts/build_dic_from_emb_multichoice.py --src_embeddings $LANG_PAIR.$TRG_LANG.vec --trg_embeddings $LANG_PAIR.$SRC_LANG.vec --dictionary $TRG_LANG-$SRC_LANG.dic \
-    --vocab_size 200000 --max_choice 100 --lambda_factor 20 --cuda
+  	--vocab_size 200000 --max_choice 100 --lambda_factor 20 --cuda
   python3 $based_dir/UNMT-SPR/scripts/build_phrase_table.py $SRC_LANG-$TRG_LANG.dic $TRG_LANG-$SRC_LANG.dic $SRC_LANG $TRG_LANG
 
   echo "Generate pre-trained embeddings and vocab files for NMT models..."
-  cat ../Train/$SRC_BPE ../Train/$TRG_BPE > train_data_bpe.whole
+  # cat ../Train/$SRC_BPE ../Train/$TRG_BPE > train_data_bpe.whole
   echo "Build Vocab........"
-  python3 $based_dir/UNMT-SPR/scripts/build_vocab.py train_data_bpe.whole train_data_bpe.vocab --vocabsize 60000 
+  python3 $based_dir/UNMT-SPR/scripts/build_vocab.py ../Train/combined.bpe train_data_bpe.vocab --vocabsize 60000 
   python3 $based_dir/UNMT-SPR/scripts/build_true_emb_and_vocab.py train_data_bpe.vocab $LANG_PAIR.bpe.emb.vec true.$LANG_PAIR.bpe.vocab true.$LANG_PAIR.bpe.vec
-  rm train_data_bpe.whole train_data_bpe.vocab
+  rm train_data_bpe.vocab # train_data_bpe.whole
+  rm ../Train/combined.bpe
 
+  
   echo "Training KenLM..."
   cd ../Train
   $MOSES_HOME/bin/lmplz -o 5 --prune 0 1 1 2 2 < $SRC_TC > ../Models/lm.arpa.$SRC
   $MOSES_HOME/bin/build_binary ../Models/lm.arpa.$SRC ../Models/lm.bin.$SRC
   $MOSES_HOME/bin/lmplz -o 5 --prune 0 1 1 2 2 < $TRG_TC > ../Models/lm.arpa.$TRG 
   $MOSES_HOME/bin/build_binary ../Models/lm.arpa.$TRG ../Models/lm.bin.$TRG
+  
 
   echo "Spliting files..." # this step will split the whole training data into several files, each of 4,000 ,000 lines.
   mv $SRC_TC ./tok
@@ -228,9 +235,9 @@ elif [ $MODE == "smt0" ]
 then
   cd Config/SMT0
   $MOSES_HOME/bin/moses -f $SRC_LANG-$TRG_LANG.smt0.ini -search-algorithm 1 -cube-pruning-pop-limit 5000 -s 5000 \
-    -threads 40 < ../../Train/$SRC_TC.split00 > ../../Train/$SRC_TC.split00.trans.$TRG_LANG
+  	-threads 40 < ../../Train/$SRC_TC.split00 > ../../Train/$SRC_TC.split00.trans.$TRG_LANG
   $MOSES_HOME/bin/moses -f $TRG_LANG-$SRC_LANG.smt0.ini -search-algorithm 1 -cube-pruning-pop-limit 5000 -s 5000 \
-    -threads 40 < ../../Train/$TRG_TC.split00 > ../../Train/$TRG_TC.split00.trans.$SRC_LANG
+  	-threads 40 < ../../Train/$TRG_TC.split00 > ../../Train/$TRG_TC.split00.trans.$SRC_LANG
   cd ../../Train/tok
   python3 $based_dir/UNMT-SPR/scripts/clean_parallel_data.py $SRC_TC.split00 $SRC_TC.split00.trans.$TRG_LANG ../../Models/langid.bin $SRC_LANG $TRG_LANG False 4000000
   mv $SRC_TC.split00.cl ../bpe/NMT0/corpus.$SRC_LANG-$TRG_LANG.tc.$SRC_LANG
@@ -294,10 +301,10 @@ then
   SPLIT_PART=$3
   cd Config/SMT$EPOCH/$SRC2$TRG
   $MOSES_HOME/bin/moses -f moses.tuned.ini -search-algorithm 1 -cube-pruning-pop-limit 5000 -s 5000 \
-    -threads 40 < ../../../Train/$SRC_TC.split$SPLIT_PART > ../../../Train/$SRC_TC.split$SPLIT_PART.trans.$TRG_LANG
+  	-threads 40 < ../../../Train/$SRC_TC.split$SPLIT_PART > ../../../Train/$SRC_TC.split$SPLIT_PART.trans.$TRG_LANG
   cd ../$TRG2$SRC
   $MOSES_HOME/bin/moses -f $TRG_LANG-$SRC_LANG.smt0.ini -search-algorithm 1 -cube-pruning-pop-limit 5000 -s 5000 \
-    -threads 40 < ../../../Train/$TRG_TC.split$SPLIT_PART > ../../../Train/$TRG_TC.split$SPLIT_PART.trans.$SRC_LANG
+  	-threads 40 < ../../../Train/$TRG_TC.split$SPLIT_PART > ../../../Train/$TRG_TC.split$SPLIT_PART.trans.$SRC_LANG
   cd ../../Train/tok
   python3 $based_dir/UNMT-SPR/scripts/clean_parallel_data.py $SRC_TC.split$SPLIT_PART $SRC_TC.split$SPLIT_PART.trans.$TRG_LANG ../../Models/langid.bin $SRC_LANG $TRG_LANG False 4000000
   mv $SRC_TC.split$SPLIT_PART.cl ../bpe/NMT$EPOCH/corpus.$SRC_LANG-$TRG_LANG.tc.$SRC_LANG
