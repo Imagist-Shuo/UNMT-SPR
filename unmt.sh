@@ -159,7 +159,7 @@ then
   echo "Training BPE codes and applying..."
   cd ../Train
 
-  subword-nmt learn-joint-bpe-and-vocab --input $SRC_TOK $TRG_TOK -s 60000 -o ../Vocab/$LANG_PAIR.code --write-vocabulary ../Vocab/$LANG_PAIR.bpe.$SRC.vocab ../Vocab/$LANG_PAIR.bpe.$TRG.vocab
+  subword-nmt learn-joint-bpe-and-vocab --input $SRC_TC $TRG_TC -s 60000 -o ../Vocab/$LANG_PAIR.code --write-vocabulary ../Vocab/$LANG_PAIR.bpe.$SRC.vocab ../Vocab/$LANG_PAIR.bpe.$TRG.vocab
   subword-nmt apply-bpe -c ../Vocab/$LANG_PAIR.code --vocabulary ../Vocab/$LANG_PAIR.bpe.$SRC_LANG.vocab --vocabulary-threshold 50 < $SRC_TC > $SRC_BPE
   subword-nmt apply-bpe -c ../Vocab/$LANG_PAIR.code --vocabulary ../Vocab/$LANG_PAIR.bpe.$TRG_LANG.vocab --vocabulary-threshold 50 < $TRG_TC > $TRG_BPE
   cd ../Test
